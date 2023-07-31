@@ -38,7 +38,7 @@ class _ChatPageState extends State<ChatPage> {
             Expanded(
               child: StreamBuilder(
                 stream: FirestoreHelper.firestoreHelper
-                    .displayChatMessage(id: data.id),
+                    .displayChatMessage(userId: data.id, user: data.data()),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(
@@ -52,41 +52,142 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                     );
                   } else if (snapshot.hasData) {
-                    QuerySnapshot<Map<String, dynamic>> data =
+                    QuerySnapshot<Map<String, dynamic>> data1 =
                         snapshot.data as QuerySnapshot<Map<String, dynamic>>;
 
                     List<QueryDocumentSnapshot<Map<String, dynamic>>> allDocs =
-                        data.docs;
-                    return ListView.builder(
-                      itemCount: allDocs.length,
-                      reverse: true,
-                      itemBuilder: (context, i) => Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(15),
-                              decoration: BoxDecoration(
-                                color : Color(0xffe0d5ff),
-                                borderRadius: BorderRadius.only(
-                                  bottomRight: Radius.circular(50),
-                                  bottomLeft: Radius.circular(50),
-                                  topLeft: Radius.circular(50),
-                                ),
-                              ),
-                              child: Text(
-                                "${allDocs[i].data()['messge']}",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
+                        data1.docs;
+                    return (allDocs.isEmpty)
+                        ? Center(
+                            child: Text("No Chat Available"),
+                          )
+                        : ListView.builder(
+                            itemCount: allDocs.length,
+                            reverse: true,
+                            itemBuilder: (context, i) => (allDocs[i]
+                                        ['fromId'] ==
+                                    FirestoreHelper.auth.uid)
+                                ? Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Spacer(),
+                                        Flexible(
+                                          flex: 4,
+                                          child: InkWell(
+                                            onLongPress: () {
+                                              FirestoreHelper.firestoreHelper.deleteMessage(user: data.data(), recordId: allDocs[i]['chatId'].toString());
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(10),
+                                              decoration: BoxDecoration(
+                                                color: Color(0xffe7ffdb),
+                                                borderRadius: BorderRadius.only(
+                                                  bottomRight:
+                                                      Radius.circular(20),
+                                                  bottomLeft: Radius.circular(20),
+                                                  topLeft: Radius.circular(20),
+                                                ),
+                                              ),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Flexible(
+                                                        child: Text(
+                                                          "${allDocs[i]['msg']}",
+                                                          style: TextStyle(
+                                                            color: Colors.black,
+                                                            fontSize: 14,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      SizedBox(
+                                                        width: 10,
+                                                      ),
+                                                      Text(
+                                                        "${allDocs[i]['sent']}  ✔",
+                                                        style: TextStyle(
+                                                          color: Colors.grey,
+                                                          fontSize: 10,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Flexible(
+                                          child: Container(
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.only(
+                                                bottomRight: Radius.circular(20),
+                                                bottomLeft: Radius.circular(20),
+                                                topRight: Radius.circular(20),
+                                              ),
+                                            ),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                              children: [
+                                                Row(
+                                                  mainAxisSize:
+                                                  MainAxisSize.min,
+                                                  mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                                  children: [
+                                                    Flexible(
+                                                      child: Text(
+                                                        "${allDocs[i]['msg']}",
+                                                        style: TextStyle(
+                                                          color: Colors.black,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 10,
+                                                    ),
+                                                    Text(
+                                                      "${allDocs[i]['sent']}",
+                                                      style: TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 10,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Spacer(),
+                                      ],
+                                    ),
+                                  ),
+                          );
                   }
                   return Center(
                     child: CircularProgressIndicator(),
@@ -125,9 +226,12 @@ class _ChatPageState extends State<ChatPage> {
                   child: CircleAvatar(
                     radius: 30,
                     child: IconButton(
-                      onPressed: () {
-                        FirestoreHelper.firestoreHelper.sendChatMessage(
-                            msg: chatController.text, id: data.id);
+                      onPressed: () async {
+                        await FirestoreHelper.firestoreHelper.sendChatMessage(
+                          msg: chatController.text,
+                          userId: data.id,
+                          user: data.data(),
+                        );
                         chatController.clear();
                       },
                       icon: Icon(
@@ -142,6 +246,7 @@ class _ChatPageState extends State<ChatPage> {
           ],
         ),
       ),
+      backgroundColor: Color(0xfff0e7de),
     );
   }
 }

@@ -30,8 +30,6 @@ class _LoginPageState extends State<LoginPage> {
   String email = "";
   String password = "";
 
-
-
   @override
   void initState() {
     super.initState();
@@ -57,7 +55,9 @@ class _LoginPageState extends State<LoginPage> {
       },
     );
   }
+
   SingupController singupController = Get.put(SingupController());
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -160,7 +160,8 @@ class _LoginPageState extends State<LoginPage> {
                         if (singInKey.currentState!.validate()) {
                           singInKey.currentState!.save();
 
-                           Map<String,dynamic> data = await FirebaseHelper.firebaseHelper
+                          Map<String, dynamic> data = await FirebaseHelper
+                              .firebaseHelper
                               .sinInWithEmailAndPassword(
                                   email: email, password: password);
 
@@ -219,32 +220,35 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         GestureDetector(
                           onTap: () async {
-                             Map<String,dynamic> data = await FirebaseHelper.firebaseHelper
+                            Map<String, dynamic> data = await FirebaseHelper
+                                .firebaseHelper
                                 .signInWithGoogle();
 
-                             if (data['user'] != null) {
-                               Get.snackbar(
-                                 "SING IN",
-                                 "Sign In Successfully..",
-                                 backgroundColor: Colors.green,
-                               );
-                               // singupController.getTheUserValue(data: data);
-                               // Get.offAndToNamed("/HomePage");
-                               // singupController.changeTheValue();
-                               if(await FirestoreHelper.firestoreHelper.userExits()) {
-                                 Get.offAndToNamed("/HomePage");
-                               }else {
-
-                               }
-
-                             } else {
-                               Get.snackbar(
-                                 "SING IN",
-                                 data['msg'],
-                                 backgroundColor: Colors.redAccent,
-                               );
-                             }
-
+                            if (data['user'] != null) {
+                              Get.snackbar(
+                                "SING IN",
+                                "Sign In Successfully..",
+                                backgroundColor: Colors.green,
+                              );
+                              // singupController.getTheUserValue(data: data);
+                              // Get.offAndToNamed("/HomePage");
+                              if (await FirestoreHelper.firestoreHelper
+                                  .userExits()) {
+                                Get.offAndToNamed("/HomePage");
+                              } else {
+                                FirestoreHelper.firestoreHelper
+                                    .createUser()
+                                    .then(
+                                        (_) => Get.offAndToNamed("/HomePage"));
+                              }
+                              singupController.changeTheValue();
+                            } else {
+                              Get.snackbar(
+                                "SING IN",
+                                data['msg'],
+                                backgroundColor: Colors.redAccent,
+                              );
+                            }
                           },
                           child: Container(
                             height: heigth * 0.065,
@@ -265,7 +269,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         GestureDetector(
                           onTap: () async {
-                            Map<String,dynamic> data = await FirebaseHelper.firebaseHelper
+                            Map<String, dynamic> data = await FirebaseHelper
+                                .firebaseHelper
                                 .signInAnonymously();
 
                             if (data['user'] != null) {

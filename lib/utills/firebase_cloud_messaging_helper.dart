@@ -9,6 +9,9 @@ class FCMHelper {
   static final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 
   Future<String?> fetchToken() async{
+    print("***** token ******");
+    print(firebaseMessaging.getToken());
+    print("***** token ******");
     return await firebaseMessaging.getToken();
   }
 }
